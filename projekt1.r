@@ -209,26 +209,129 @@ summary(drugs) # for each category
 write.csv(drugs, "output.csv", row.names = FALSE)
 saveRDS(drugs, "output.Rda")
 
-#LATTICE
 
-# library(lattice)
-# library(latticeExtra)
-# 
-# histogram(~amphetamine|factor(gender),
-#           data = drugs,
-#           type = "count",
-#           auto.key = FALSE)
-# 
-# ?histogram
-
-
-#GGPLOT
-library(ggplot2)
 # drugs %>%
 #   group_by(ketamine) %>%
 #   count()
 
 
+
+# VISUALIZATION 3
+library(graphics)
+
+neoac <- function(substance, active) {
+  if(active) {
+    df = users(substance)
+  } else {
+    df = nonusers(substance)
+  }
+  
+  var <- df %>%
+    summarise(
+      n = mean(nscore),
+      e = mean(escore),
+      o = mean(oscore),
+      a = mean(ascore),
+      c = mean(cscore))
+  
+  var <- as.numeric(var[1, ])
+  names(var) <- c("n", "e", "o", "a", "c")
+  return(var)
+}
+
+users <- function(substance) {
+  drugs %>% 
+    filter(
+      substance == "Used in Last Day" 
+      | substance == "Used in Last Week"
+      | substance == "Used in Last Month"
+      | substance == "Used in Last Year"
+    )
+}
+
+nonusers <- function(substance) {
+  drugs %>% 
+    filter(
+      substance == "Never Used" 
+      | substance == "Used over a Decade Ago"
+      | substance == "Used in Last Decade"
+    )
+}
+
+#
+par(mfrow=c(2,2))
+
+# cocaine
+cocaine_yes = neoac(drugs$cocaine, T)
+cocaine_no = neoac(drugs$cocaine, F)
+
+scores_range <- range(12, cocaine_yes, cocaine_no, 25)
+plot(cocaine_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
+axis(2, las=1, at=12:scores_range[2])
+lines(cocaine_no, type="b", pch=15, lty=2, col="blue")
+title(main = "Cocaine",
+      xlab = "NEO PI-R personality dimensions",
+      ylab = "Average score")
+box()
+
+
+# ecstasy
+ecstasy_yes = neoac(drugs$ecstasy, T)
+ecstasy_no = neoac(drugs$ecstasy, F)
+
+scores_range <- range(12, ecstasy_yes, ecstasy_no, 25)
+plot(ecstasy_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
+axis(2, las=1, at=12:scores_range[2])
+lines(ecstasy_no, type="b", pch=15, lty=2, col="blue")
+title(main = "Ecstasy",
+      xlab = "NEO PI-R personality dimensions",
+      ylab = "Average score")
+box()
+
+# meth
+meth_yes = neoac(drugs$meth, T)
+meth_no = neoac(drugs$meth, F)
+
+scores_range <- range(12, meth_yes, meth_no, 25)
+plot(meth_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
+axis(2, las=1, at=12:scores_range[2])
+lines(meth_no, type="b", pch=15, lty=2, col="blue")
+title(main = "Meth",
+      xlab = "NEO PI-R personality dimensions",
+      ylab = "Average score")
+box()
+
+# crack
+crack_yes = neoac(drugs$meth, T)
+crack_no = neoac(drugs$meth, F)
+
+scores_range <- range(12, crack_yes, crack_no, 25)
+plot(crack_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
+axis(2, las=1, at=12:scores_range[2])
+lines(crack_no, type="b", pch=15, lty=2, col="blue")
+title(main = "Crack",
+      xlab = "NEO PI-R personality dimensions",
+      ylab = "Average score")
+box()
+
+mtext("Average personality profiles for users and non-users of some drugs",
+      side = 3, line = -1.2, outer = TRUE)
+
+
+
+
+
+
+
+
+
+
+#GGPLOT
+library(ggplot2)
 # VISUALIZATION 1
 
 plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
