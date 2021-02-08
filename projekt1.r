@@ -43,13 +43,13 @@ drugs[ ,c(2:11)] <- lapply(drugs[ ,c(2:11)], as.character)
 
 #usage
 usage <- c(
-  "Never Used",
-  "Used over a Decade Ago", 
-  "Used in Last Decade",
-  "Used in Last Year",
-  "Used in Last Month",
-  "Used in Last Week",
-  "Used in Last Day"
+  "Never",
+  "Over Decade", 
+  "Last Decade",
+  "Last Year",
+  "Last Month",
+  "Last Week",
+  "Last Day"
 )
 names(usage) <- c("CL0", "CL1", "CL2", "CL3", "CL4", "CL5", "CL6")
 names
@@ -228,11 +228,71 @@ library(ggplot2)
 #   group_by(cocaine) %>%
 #   summarise(avg = mean(nscore))
 
-ggplot(data = drugs, aes(x = cannabis, fill = age)) +
+
+# VIS 1
+
+plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
   geom_bar() +
   theme_bw() + 
-  facet_wrap(~ gender)
+  facet_wrap(~ gender) +
+  labs(x = "Cannabis usage", y = "Number of respondends") +
+  ggtitle("cannabis") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none",
+        axis.text.y = ) +
+  coord_flip()
 
+plot2 <- ggplot(data = drugs, aes(x = amphetamine, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  labs(x = "Cannabis usage", y = "Number of respondends") +
+  ggtitle("amphetamine") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "none") +
+  coord_flip()
+
+plot3 <- ggplot(data = drugs, aes(x = nicotine, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  labs(x = "Cannabis usage", y = "Number of respondends") +
+  ggtitle("nicotine") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "none") +
+  coord_flip()
+
+plot4 <- ggplot(data = drugs, aes(x = ecstasy, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  labs(x = "Cannabis usage", y = "Number of respondends") +
+  ggtitle("ecstasy") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y=element_blank()) +
+  coord_flip()
+
+library(gridExtra)
+grid.arrange(plot1,plot2,plot3,plot4, ncol = 4, nrow = 1,
+             top = "Some drugs usage broken down by gender and age",
+             left = "Usage",
+             bottom = "Number of respondens")
+
+
+# VIS 2
 illegal <- c(15,19,21:25,27:29,31)
 illegal_count <- rowSums(drugs[ ,illegal] != "Never Used", na.rm = TRUE)
 
