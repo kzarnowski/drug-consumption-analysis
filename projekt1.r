@@ -256,40 +256,35 @@ df <- as.data.frame(t(df))
 df <- add_column(df, .before = 1, drugs = colnames(drugs[,21:29]))
 rownames(df) <- c(1:9)
 colnames(df) <- c("Substance", "ActiveUsers", "PastUsers", "NonUsers")
+df <- mutate(df, EverUsed = ActiveUsers + PastUsers)
+df <- mutate(df, activeUsersRatio = ActiveUsers/EverUsed)
+df$activeUsersRatio <- round(df$activeUsersRatio, digits = 2)
 
 
-b1 <- barchart(ActiveUsers ~ Substance, data = df,
-         main = "Active 18-34 years old users of some drugs",
-         xlab = "Substance",
-         ylab = "Users",
-         col = "chocolate",
-         panel = function(...) {
-           panel.fill(col = "gray4")
-           panel.barchart(...)
-         }
-         )
+xyplot(ActiveUsers ~ EverUsed, data = df,
+       main = "Correlation between early use of addictive substance in youth \nand currently active use",
+       xlab = "Respondents who tried drugs in the past",
+       ylab = "Active users",
+       col = "chocolate",
+       pch = 19,
+       fontsize = 15,
+       panel = function(...) {
+         panel.fill(col = "gray4")
+         panel.xyplot(...)
+       })
 
-b2 <- barchart(PastUsers ~ Substance, data = df,
-         main = "Past 18-34 years old users of some drugs",
-         xlab = "Substance",
-         ylab = "Users",
-         col = "chocolate",
-         panel = function(...) {
-           panel.fill(col = "gray4")
-           panel.barchart(...)
-         }
-)
-
-grid.arrange(b1,b2,nrow=2)
 
 # VISUALIZATION 5
 library(plotly)
 
-
-
-
-
-
+plot_ly(data = df, 
+        x = ~Substance,
+        y = ~ActiveUsers,
+        type = "bar",
+        name = "Active Users",
+        marker = list(color = 'rgb(50,125,190)')) %>%
+  add_trace(y = ~PastUsers, name = "Past Users", marker = list(color = 'rgb(200,200,200)')) %>%
+  layout(yaxis = list(title = "Users"))
 
 
 
