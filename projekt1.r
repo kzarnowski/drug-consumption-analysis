@@ -209,14 +209,150 @@ summary(drugs) # for each category
 write.csv(drugs, "output.csv", row.names = FALSE)
 saveRDS(drugs, "output.Rda")
 
-
-# drugs %>%
-#   group_by(ketamine) %>%
-#   count()
+# DATA VISUALIZATION
 
 
+# VISUALIZATION 4
 
-# VISUALIZATION 3
+library(lattice)
+library(latticeExtra)
+library(tidyverse)
+# uzycie nielegalnych narkotykow w przedziale wiekowym 18-24
+# active-users : <= last_month
+# past_users: >last_month & != never
+# non_users: never
+
+sample_drugs <- c(21,22,24,28,29)
+youth <- drugs %>%
+  filter(age == "18-24" | age == "25-34") %>%
+  select(all_of(sample_drugs))
+
+df <- count(youth, cocaine)
+df <- subset(df, select = n)
+rownames(df) <- usage
+df <- rename(df, cocaine = n )
+df <- mutate(df, crack = count(youth, crack)$n)
+df <- mutate(df, heroin = count(youth, heroin)$n)
+df <- mutate(df, meth = count(youth, meth)$n)
+df <- mutate(df, mushrooms = count(youth, mushrooms)$n)
+
+users <- df %>%
+    slice(4:7) %>%
+    summarise_all(sum)
+past_users <- df %>%
+  slice(2:3) %>%
+  summarise_all(sum)
+non_users <- df[1, ]
+
+df <- bind_rows(users, past_users, df[1, ])
+df <- as.data.frame(t(df))
+
+names <- c("cocaine", "crack", "heroin", "meth", "mushrooms")
+
+df <- add_column(df, .before = 1, drugs = c("cocaine", "crack", "heroin", "meth", "mushrooms"))
+rownames(df) <- c(1:5)
+colnames(df) <- c("Substance", "ActiveUsers", "PastUsers", "NonUsers")
+
+barchart(ActiveUsers ~ Substance, data = df,
+         main = "Active 18-34 years old users of some drugs",
+         xlab = "Substance",
+         ylab = "Users",
+         col = "chocolate",
+         panel = function(...) {
+           panel.fill(col = "gray4")
+           panel.barchart(...)
+         }
+         )
+
+
+# VISUALIZATION 5
+library(plotly)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# VISUALIZATION 1
+library(ggplot2)
+
+plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  ggtitle("cannabis") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none",
+        axis.text.y = ) +
+  coord_flip()
+
+plot2 <- ggplot(data = drugs, aes(x = amphetamine, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  ggtitle("amphetamine") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.text.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        legend.position = "right") +
+  coord_flip()
+
+plot3 <- ggplot(data = drugs, aes(x = nicotine, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  ggtitle("nicotine") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.title.y=element_blank(),
+        legend.position = "none") +
+  coord_flip()
+
+plot4 <- ggplot(data = drugs, aes(x = ecstasy, fill = age)) +
+  geom_bar() +
+  theme_bw() + 
+  facet_wrap(~ gender) +
+  ggtitle("ecstasy") +
+  theme(plot.title = element_text(hjust = 0.5),
+        axis.title.x=element_blank(),
+        axis.title.y=element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.text.y=element_blank()) +
+  coord_flip()
+
+library(gridExtra)
+grid.arrange(plot1,plot2,plot3,plot4, ncol = 2, nrow = 2,
+             top = "Some drugs usage broken down by gender and age",
+             left = "Usage",
+             bottom = "Number of respondens")
+
+# VISUALIZATION 2
 library(graphics)
 
 neoac <- function(substance, active) {
@@ -275,7 +411,6 @@ title(main = "Cocaine",
       ylab = "Average score")
 box()
 
-
 # ecstasy
 ecstasy_yes = neoac(drugs$ecstasy, T)
 ecstasy_no = neoac(drugs$ecstasy, F)
@@ -321,76 +456,10 @@ box()
 mtext("Average personality profiles for users and non-users of some drugs",
       side = 3, line = -1.2, outer = TRUE)
 
+par(mfrow=c(1,1))
 
 
-
-
-
-
-
-
-
-#GGPLOT
-library(ggplot2)
-# VISUALIZATION 1
-
-plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
-  geom_bar() +
-  theme_bw() + 
-  facet_wrap(~ gender) +
-  ggtitle("cannabis") +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
-        legend.position = "none",
-        axis.text.y = ) +
-  coord_flip()
-
-plot2 <- ggplot(data = drugs, aes(x = amphetamine, fill = age)) +
-  geom_bar() +
-  theme_bw() + 
-  facet_wrap(~ gender) +
-  ggtitle("amphetamine") +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
-        axis.text.y=element_blank(),
-        axis.ticks.y = element_blank(),
-        legend.position = "right") +
-  coord_flip()
-
-plot3 <- ggplot(data = drugs, aes(x = nicotine, fill = age)) +
-  geom_bar() +
-  theme_bw() + 
-  facet_wrap(~ gender) +
-  ggtitle("nicotine") +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.title.x=element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.title.y=element_blank(),
-        legend.position = "none") +
-  coord_flip()
-
-plot4 <- ggplot(data = drugs, aes(x = ecstasy, fill = age)) +
-  geom_bar() +
-  theme_bw() + 
-  facet_wrap(~ gender) +
-  ggtitle("ecstasy") +
-  theme(plot.title = element_text(hjust = 0.5),
-        axis.title.x=element_blank(),
-        axis.title.y=element_blank(),
-        axis.ticks.y = element_blank(),
-        axis.text.y=element_blank()) +
-  coord_flip()
-
-library(gridExtra)
-grid.arrange(plot1,plot2,plot3,plot4, ncol = 2, nrow = 2,
-             top = "Some drugs usage broken down by gender and age",
-             left = "Usage",
-             bottom = "Number of respondens")
-
-
-# VISUALIZATION 2
+# VISUALIZATION 3
 illegal <- c(15,19,21:25,27:29,31)
 illegal_count <- rowSums(drugs[ ,illegal] != "Never Used", na.rm = TRUE)
 
