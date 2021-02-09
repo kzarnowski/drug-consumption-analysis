@@ -222,7 +222,8 @@ library(tidyverse)
 # past_users: >last_month & != never
 # non_users: never
 
-sample_drugs <- c(21,22,24,28,29)
+#sample_drugs <- c(21,22,24,28,29)
+sample_drugs <- c(21:29)
 youth <- drugs %>%
   filter(age == "18-24" | age == "25-34") %>%
   select(all_of(sample_drugs))
@@ -231,8 +232,13 @@ df <- count(youth, cocaine)
 df <- subset(df, select = n)
 rownames(df) <- usage
 df <- rename(df, cocaine = n )
+
 df <- mutate(df, crack = count(youth, crack)$n)
+df <- mutate(df, ecstasy = count(youth, ecstasy)$n)
 df <- mutate(df, heroin = count(youth, heroin)$n)
+df <- mutate(df, ketamine = count(youth, ketamine)$n)
+df <- mutate(df, legalHighs = count(youth, legalHighs)$n)
+df <- mutate(df, lsd = count(youth, lsd)$n)
 df <- mutate(df, meth = count(youth, meth)$n)
 df <- mutate(df, mushrooms = count(youth, mushrooms)$n)
 
@@ -247,13 +253,12 @@ non_users <- df[1, ]
 df <- bind_rows(users, past_users, df[1, ])
 df <- as.data.frame(t(df))
 
-names <- c("cocaine", "crack", "heroin", "meth", "mushrooms")
-
-df <- add_column(df, .before = 1, drugs = c("cocaine", "crack", "heroin", "meth", "mushrooms"))
-rownames(df) <- c(1:5)
+df <- add_column(df, .before = 1, drugs = colnames(drugs[,21:29]))
+rownames(df) <- c(1:9)
 colnames(df) <- c("Substance", "ActiveUsers", "PastUsers", "NonUsers")
 
-barchart(ActiveUsers ~ Substance, data = df,
+
+b1 <- barchart(ActiveUsers ~ Substance, data = df,
          main = "Active 18-34 years old users of some drugs",
          xlab = "Substance",
          ylab = "Users",
@@ -264,6 +269,18 @@ barchart(ActiveUsers ~ Substance, data = df,
          }
          )
 
+b2 <- barchart(PastUsers ~ Substance, data = df,
+         main = "Past 18-34 years old users of some drugs",
+         xlab = "Substance",
+         ylab = "Users",
+         col = "chocolate",
+         panel = function(...) {
+           panel.fill(col = "gray4")
+           panel.barchart(...)
+         }
+)
+
+grid.arrange(b1,b2,nrow=2)
 
 # VISUALIZATION 5
 library(plotly)
