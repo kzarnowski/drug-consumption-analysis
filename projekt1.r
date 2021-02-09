@@ -1,5 +1,14 @@
 # DATA PREPARATION
 
+library(tidyverse)
+library(lattice)
+library(latticeExtra)
+library(plotly)
+library(graphics)
+library(ggplot2)
+library(grid)
+library(gridExtra)
+
 drugs <- read.delim("drug_consumption.data", header = FALSE, sep = ",", fill = TRUE)
   
 #str(data)
@@ -136,10 +145,6 @@ names(ethnicityLevels) <- c(
 tmp <- ethnicityLevels[drugs$ethnicity]
 drugs$ethnicity <- as.factor(tmp)
 
-
-# WORKING WITH TIDYVERSE
-library(tidyverse)
-
 nscoreLevels <- c(12:60)
 escoreLevels <- c(16,18:59)
 oscoreLevels <- c(24,26,28:60)
@@ -204,111 +209,14 @@ if (sum(is.na(drugs)) > 0) {
   print("No missing values")
 }
 
-summary(drugs) # for each category
+summary(drugs)
 
-write.csv(drugs, "output.csv", row.names = FALSE)
-saveRDS(drugs, "output.Rda")
+write.csv(drugs, "Żarnowski_dane_przekształcone.csv", row.names = FALSE)
+saveRDS(drugs, "drug_consumption_data.Rda")
 
 # DATA VISUALIZATION
 
-
-# VISUALIZATION 4
-
-library(lattice)
-library(latticeExtra)
-library(tidyverse)
-# uzycie nielegalnych narkotykow w przedziale wiekowym 18-24
-# active-users : <= last_month
-# past_users: >last_month & != never
-# non_users: never
-
-#sample_drugs <- c(21,22,24,28,29)
-sample_drugs <- c(21:29)
-youth <- drugs %>%
-  filter(age == "18-24" | age == "25-34") %>%
-  select(all_of(sample_drugs))
-
-df <- count(youth, cocaine)
-df <- subset(df, select = n)
-rownames(df) <- usage
-df <- rename(df, cocaine = n )
-
-df <- mutate(df, crack = count(youth, crack)$n)
-df <- mutate(df, ecstasy = count(youth, ecstasy)$n)
-df <- mutate(df, heroin = count(youth, heroin)$n)
-df <- mutate(df, ketamine = count(youth, ketamine)$n)
-df <- mutate(df, legalHighs = count(youth, legalHighs)$n)
-df <- mutate(df, lsd = count(youth, lsd)$n)
-df <- mutate(df, meth = count(youth, meth)$n)
-df <- mutate(df, mushrooms = count(youth, mushrooms)$n)
-
-users <- df %>%
-    slice(4:7) %>%
-    summarise_all(sum)
-past_users <- df %>%
-  slice(2:3) %>%
-  summarise_all(sum)
-non_users <- df[1, ]
-
-df <- bind_rows(users, past_users, df[1, ])
-df <- as.data.frame(t(df))
-
-df <- add_column(df, .before = 1, drugs = colnames(drugs[,21:29]))
-rownames(df) <- c(1:9)
-colnames(df) <- c("Substance", "ActiveUsers", "PastUsers", "NonUsers")
-df <- mutate(df, EverUsed = ActiveUsers + PastUsers)
-df <- mutate(df, activeUsersRatio = ActiveUsers/EverUsed)
-df$activeUsersRatio <- round(df$activeUsersRatio, digits = 2)
-
-
-xyplot(ActiveUsers ~ EverUsed, data = df,
-       main = "Correlation between early use of addictive substance in youth \nand currently active use",
-       xlab = "Respondents who tried drugs in the past",
-       ylab = "Active users",
-       col = "chocolate",
-       pch = 19,
-       fontsize = 15,
-       panel = function(...) {
-         panel.fill(col = "gray4")
-         panel.xyplot(...)
-       })
-
-
-# VISUALIZATION 5
-library(plotly)
-
-plot_ly(data = df, 
-        x = ~Substance,
-        y = ~ActiveUsers,
-        type = "bar",
-        name = "Active Users",
-        marker = list(color = 'rgb(50,125,190)')) %>%
-  add_trace(y = ~PastUsers, name = "Past Users", marker = list(color = 'rgb(200,200,200)')) %>%
-  layout(yaxis = list(title = "Users"))
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 # VISUALIZATION 1
-library(ggplot2)
-
 plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
   geom_bar() +
   theme_bw() + 
@@ -317,8 +225,7 @@ plot1 <- ggplot(data = drugs, aes(x = cannabis, fill = age)) +
   theme(plot.title = element_text(hjust = 0.5),
         axis.title.x=element_blank(),
         axis.title.y=element_blank(),
-        legend.position = "none",
-        axis.text.y = ) +
+        legend.position = "none") +
   coord_flip()
 
 plot2 <- ggplot(data = drugs, aes(x = amphetamine, fill = age)) +
@@ -358,14 +265,12 @@ plot4 <- ggplot(data = drugs, aes(x = ecstasy, fill = age)) +
         axis.text.y=element_blank()) +
   coord_flip()
 
-library(gridExtra)
 grid.arrange(plot1,plot2,plot3,plot4, ncol = 2, nrow = 2,
              top = "Some drugs usage broken down by gender and age",
              left = "Usage",
              bottom = "Number of respondens")
 
 # VISUALIZATION 2
-library(graphics)
 
 neoac <- function(substance, active) {
   if(active) {
@@ -406,63 +311,94 @@ nonusers <- function(substance) {
     )
 }
 
-#
 par(mfrow=c(2,2))
 
 # cocaine
-cocaine_yes = neoac(drugs$cocaine, T)
-cocaine_no = neoac(drugs$cocaine, F)
+cocaine_yes <- neoac(drugs$cocaine, T)
+cocaine_no <- neoac(drugs$cocaine, F)
 
 scores_range <- range(12, cocaine_yes, cocaine_no, 25)
-plot(cocaine_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+plot(cocaine_yes,
+     type="b",
+     col="red",
+     pch = 19,
+     ylim=scores_range,
+     axes=FALSE,
+     ann=FALSE)
 axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
 axis(2, las=1, at=12:scores_range[2])
 lines(cocaine_no, type="b", pch=15, lty=2, col="blue")
 title(main = "Cocaine",
       xlab = "NEO PI-R personality dimensions",
       ylab = "Average score")
+legend(2.5, scores_range[2], c("non-user","user"), cex=0.7, 
+       col=c("blue","red"), pch=15:19, lty=2:1)
 box()
 
 # ecstasy
-ecstasy_yes = neoac(drugs$ecstasy, T)
-ecstasy_no = neoac(drugs$ecstasy, F)
+ecstasy_yes <- neoac(drugs$ecstasy, T)
+ecstasy_no <- neoac(drugs$ecstasy, F)
 
 scores_range <- range(12, ecstasy_yes, ecstasy_no, 25)
-plot(ecstasy_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+plot(ecstasy_yes,
+     type="b",
+     col="red",
+     pch = 19,
+     ylim=scores_range,
+     axes=FALSE,
+     ann=FALSE)
 axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
 axis(2, las=1, at=12:scores_range[2])
 lines(ecstasy_no, type="b", pch=15, lty=2, col="blue")
 title(main = "Ecstasy",
       xlab = "NEO PI-R personality dimensions",
       ylab = "Average score")
+legend(2.5, scores_range[2], c("non-user","user"), cex=0.7, 
+       col=c("blue","red"), pch=15:19, lty=2:1)
 box()
 
 # meth
-meth_yes = neoac(drugs$meth, T)
-meth_no = neoac(drugs$meth, F)
+meth_yes <- neoac(drugs$meth, T)
+meth_no <- neoac(drugs$meth, F)
 
 scores_range <- range(12, meth_yes, meth_no, 25)
-plot(meth_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+plot(meth_yes,
+     type="b",
+     col="red",
+     pch = 19,
+     ylim=scores_range,
+     axes=FALSE,
+     ann=FALSE)
 axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
 axis(2, las=1, at=12:scores_range[2])
 lines(meth_no, type="b", pch=15, lty=2, col="blue")
 title(main = "Meth",
       xlab = "NEO PI-R personality dimensions",
       ylab = "Average score")
+legend(2.5, scores_range[2], c("non-user","user"), cex=0.7, 
+       col=c("blue","red"), pch=15:19, lty=2:1)
 box()
 
 # crack
-crack_yes = neoac(drugs$meth, T)
-crack_no = neoac(drugs$meth, F)
+crack_yes <- neoac(drugs$meth, T)
+crack_no <- neoac(drugs$meth, F)
 
 scores_range <- range(12, crack_yes, crack_no, 25)
-plot(crack_yes, type="b", col="red", pch = 19, ylim=scores_range, axes=FALSE, ann=FALSE)
+plot(crack_yes,
+     type="b",
+     col="red",
+     pch = 19,
+     ylim=scores_range,
+     axes=FALSE,
+     ann=FALSE)
 axis(1, at=1:5, lab=c("n", "e", "o", "a", "c"))
 axis(2, las=1, at=12:scores_range[2])
 lines(crack_no, type="b", pch=15, lty=2, col="blue")
 title(main = "Crack",
       xlab = "NEO PI-R personality dimensions",
       ylab = "Average score")
+legend(2.5, scores_range[2], c("non-user","user"), cex=0.7, 
+       col=c("blue","red"), pch=15:19, lty=2:1)
 box()
 
 mtext("Average personality profiles for users and non-users of some drugs",
@@ -470,8 +406,75 @@ mtext("Average personality profiles for users and non-users of some drugs",
 
 par(mfrow=c(1,1))
 
-
 # VISUALIZATION 3
+
+plot_ly(data = df, 
+        x = ~Substance,
+        y = ~ActiveUsers,
+        type = "bar",
+        name = "Active Users",
+        marker = list(color = 'rgb(50,125,190)')) %>%
+  add_trace(y = ~PastUsers, name = "Past Users", marker = list(color = 'rgb(200,200,200)')) %>%
+  layout(yaxis = list(title = "Users"))
+
+# VISUALIZATION 4
+
+# active-users : <= last_month
+# past_users: >last_month & != never
+# non_users: never
+
+sample_drugs <- c(21:29)
+youth <- drugs %>%
+  filter(age == "18-24" | age == "25-34") %>%
+  select(all_of(sample_drugs))
+
+df <- count(youth, cocaine)
+df <- subset(df, select = n)
+rownames(df) <- usage
+df <- rename(df, cocaine = n )
+
+df <- mutate(df, crack = count(youth, crack)$n)
+df <- mutate(df, ecstasy = count(youth, ecstasy)$n)
+df <- mutate(df, heroin = count(youth, heroin)$n)
+df <- mutate(df, ketamine = count(youth, ketamine)$n)
+df <- mutate(df, legalHighs = count(youth, legalHighs)$n)
+df <- mutate(df, lsd = count(youth, lsd)$n)
+df <- mutate(df, meth = count(youth, meth)$n)
+df <- mutate(df, mushrooms = count(youth, mushrooms)$n)
+
+users <- df %>%
+  slice(4:7) %>%
+  summarise_all(sum)
+past_users <- df %>%
+  slice(2:3) %>%
+  summarise_all(sum)
+non_users <- df[1, ]
+
+df <- bind_rows(users, past_users, df[1, ])
+df <- as.data.frame(t(df))
+
+df <- add_column(df, .before = 1, drugs = colnames(drugs[,21:29]))
+rownames(df) <- c(1:9)
+colnames(df) <- c("Substance", "ActiveUsers", "PastUsers", "NonUsers")
+df <- mutate(df, EverUsed = ActiveUsers + PastUsers)
+df <- mutate(df, activeUsersRatio = ActiveUsers/EverUsed)
+df$activeUsersRatio <- round(df$activeUsersRatio, digits = 2)
+df[ ,c(1,6)]
+
+xyplot(ActiveUsers ~ EverUsed, data = df,
+       main = "Correlation between early use of addictive substance in youth 
+       \nand currently active use",
+       xlab = "Respondents who tried drugs in the past",
+       ylab = "Active users",
+       col = "chocolate",
+       pch = 19,
+       fontsize = 15,
+       panel = function(...) {
+         panel.fill(col = "gray4")
+         panel.xyplot(...)
+       })
+
+# VISUALIZATION 5
 illegal <- c(15,19,21:25,27:29,31)
 illegal_count <- rowSums(drugs[ ,illegal] != "Never Used", na.rm = TRUE)
 
@@ -481,7 +484,5 @@ ggplot(data = drugs, aes(x = illegal_active, y = education)) +
   ggtitle("Correlation between illegal drugs usage and education") +
   labs(x = "Number of illegal drugs ever used", y = "Education level") +
   scale_size("Group", range = c(1,8)) 
-
-
 
 
